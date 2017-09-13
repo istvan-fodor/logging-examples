@@ -1,0 +1,78 @@
+<configuration scan="true" scanPeriod="30 seconds">
+
+  <property resource="db.properties" />
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [%mdc] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="FILE" class="ch.qos.logback.classic.sift.SiftingAppender">
+
+    <discriminator>
+      <key>callerId</key>
+      <defaultValue>default</defaultValue>
+    </discriminator>
+
+    <sift>
+      <appender name="FILE-${callerId}" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>target/logs/log-${callerId}.log</file>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+          <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [%mdc] - %msg%n</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+          <FileNamePattern>target/logs/archive/log-${callerId}.%i.log.zip</FileNamePattern>
+          <MinIndex>1</MinIndex>
+          <MaxIndex>10</MaxIndex>
+        </rollingPolicy>
+
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+          <MaxFileSize>1KB</MaxFileSize>
+        </triggeringPolicy>
+      </appender>
+    </sift>
+  </appender>
+
+  <appender name="DB-HSQL" class="ch.qos.logback.classic.db.DBAppender">
+    <connectionSource class="ch.qos.logback.core.db.DataSourceConnectionSource">
+      <dataSource class="com.zaxxer.hikari.HikariDataSource">
+        <driverClassName>${db.hsql.driverClass}</driverClassName>
+        <jdbcUrl>${db.hsql.jdbcurl}</jdbcUrl>
+        <username>${db.hsql.username}</username>
+        <password>${db.hsql.password}</password>
+      </dataSource>
+    </connectionSource>
+  </appender>
+  
+  <appender name="DB-POSTGRES" class="ch.qos.logback.classic.db.DBAppender">
+    <connectionSource class="ch.qos.logback.core.db.DataSourceConnectionSource">
+      <dataSource class="com.zaxxer.hikari.HikariDataSource">
+        <driverClassName>${db.pg.driverClass}</driverClassName>
+        <jdbcUrl>${db.pg.jdbcurl}</jdbcUrl>
+        <username>${db.pg.username}</username>
+        <password>${db.pg.password}</password>
+      </dataSource>
+    </connectionSource>
+  </appender>
+
+
+  <logger name="mdc-logger" level="INFO">
+    <appender-ref ref="FILE" />
+  </logger>
+
+  <logger name="com.ifodor" level="INFO" />
+  
+  <logger name="com.zaxxer" level="ERROR" />
+
+  <logger name="db-logger" level="INFO">
+    <appender-ref ref="DB-POSTGRES" />
+    <appender-ref ref="DB-HSQL" />
+  </logger>
+
+  <root level="info">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>
